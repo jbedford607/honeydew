@@ -7,7 +7,7 @@ mod mini_synth;
 pub(crate) mod slicer;
 pub(crate) mod soundfont_player;
 mod super_saw;
-mod aurora_synth;
+pub(super) mod aurora_synth;
 pub(crate) mod three_osc;
 mod transistor_bass;
 
@@ -17,7 +17,6 @@ modules! {
     2 => gm_synth,
     19 => transistor_bass,
     23 => super_saw,
-    1011 => aurora_synth,
     33 => slicer,
     39 => three_osc,
     52 => soundfont_player,

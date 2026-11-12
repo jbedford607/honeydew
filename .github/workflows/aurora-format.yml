@@ -4,6 +4,8 @@ on:
     branches: [feature/aurora-synth]
     paths:
       - '.github/workflows/aurora-format.yml'
+      - 'src/**'
+      - 'crates/audio/src/**'
 permissions:
   contents: write
 jobs:
