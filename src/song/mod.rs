@@ -65,10 +65,10 @@ impl SynthKind {
         Self::GmSynth,
         Self::TransistorBass,
         Self::SuperSaw,
-        Self::AuroraWavetable,
         Self::Slicer,
         Self::ThreeXOsc,
         Self::SoundFontPlayer,
+        Self::AuroraWavetable,
     ];
 
     pub fn label(self) -> &'static str {

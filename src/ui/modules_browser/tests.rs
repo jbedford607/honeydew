@@ -10,7 +10,6 @@ const SPEC: &[(&str, &[&str])] = &[
         "SYNTH",
         &[
             "3x Osc",
-            "Aurora Wavetable",
             "DW Sampler",
             "GMSynth",
             "MiniSynth",
@@ -18,6 +17,7 @@ const SPEC: &[(&str, &[&str])] = &[
             "SoundFont Player",
             "SuperSaw",
             "Transistor Bass",
+            "Aurora Wavetable",
         ],
     ),
     (

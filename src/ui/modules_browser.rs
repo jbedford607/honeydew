@@ -160,7 +160,6 @@ const SECTIONS: [(Option<&str>, &[Entry]); 7] = [
         Some("SYNTH"),
         &[
             Entry::Synth(S::ThreeXOsc),
-            Entry::Synth(S::AuroraWavetable),
             Entry::Synth(S::DwSampler),
             Entry::Synth(S::GmSynth),
             Entry::Synth(S::MiniSynth),
@@ -168,6 +167,7 @@ const SECTIONS: [(Option<&str>, &[Entry]); 7] = [
             Entry::Synth(S::SoundFontPlayer),
             Entry::Synth(S::SuperSaw),
             Entry::Synth(S::TransistorBass),
+            Entry::Synth(S::AuroraWavetable),
         ],
     ),
     (

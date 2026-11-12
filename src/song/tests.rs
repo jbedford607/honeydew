@@ -110,10 +110,10 @@ fn names_are_the_menu_labels() {
             "GMSynth",
             "Transistor Bass",
             "SuperSaw",
-            "Aurora Wavetable",
             "Slicer",
             "3x Osc",
             "SoundFont Player",
+            "Aurora Wavetable",
         ]
     );
 }
