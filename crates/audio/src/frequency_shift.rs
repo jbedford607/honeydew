@@ -1,4 +1,4 @@
-//! Aurora Metal Shift: 63-tap FIR Hilbert frequency shifter.
+//! Aurora Metal Shift: 191-tap FIR Hilbert frequency shifter.
 //! Unlike pitch shifting, adds a fixed frequency offset to every partial.
 use std::f32::consts::{PI, TAU};
 pub const METAL_SHIFT: u16 = 1010;
@@ -9,8 +9,8 @@ pub const FEEDBACK: usize = 4;
 pub const MIX: usize = 5;
 pub const PARAMS: usize = 6;
 pub const DEFAULTS: [f32; PARAMS] = [1.0, 0.49, 0.0, 0.3, 0.0, 0.7];
-const TAPS: usize = 63;
-const CENTRE: usize = 31;
+const TAPS: usize = 191;
+const CENTRE: usize = TAPS / 2;
 pub struct FrequencyShiftState {
     history: [[f32; TAPS]; 2],
     coefficients: [f32; TAPS],
@@ -130,6 +130,7 @@ mod tests {
             sine.hypot(cosine) / out.len() as f64
         };
         assert!(amplitude(600.0) > amplitude(500.0) * 3.0);
+        assert!(amplitude(600.0) > amplitude(400.0) * 30.0);
     }
 
     #[test]
