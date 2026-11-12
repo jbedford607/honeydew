@@ -103,6 +103,36 @@ mod tests {
         }
     }
     #[test]
+    fn shifts_a_tone_by_hz_instead_of_transposing_it() {
+        const SAMPLE_RATE: f32 = 48_000.0;
+        let mut p = DEFAULTS;
+        // A 100 Hz offset applied to a 500 Hz sine should produce about 600 Hz.
+        p[SHIFT] = (100.0_f32 / 0.25).ln() / 4000.0_f32.ln();
+        p[DIRECTION] = 0.0;
+        p[STEREO] = 0.0;
+        p[FEEDBACK] = 0.0;
+        p[MIX] = 1.0;
+        let mut effect = FrequencyShiftState::new(&p, SAMPLE_RATE);
+        let mut out = Vec::with_capacity(48_000);
+        for n in 0..48_000 {
+            let x = (TAU * 500.0 * n as f32 / SAMPLE_RATE).sin();
+            out.push(effect.process_frame(x, x).0);
+        }
+        let out = &out[2048..];
+        let amplitude = |hz: f32| {
+            let mut sine = 0.0_f64;
+            let mut cosine = 0.0_f64;
+            for (i, &sample) in out.iter().enumerate() {
+                let phase = f64::from(TAU * hz / SAMPLE_RATE) * (i + 2048) as f64;
+                sine += f64::from(sample) * phase.sin();
+                cosine += f64::from(sample) * phase.cos();
+            }
+            sine.hypot(cosine) / out.len() as f64
+        };
+        assert!(amplitude(600.0) > amplitude(500.0) * 3.0);
+    }
+
+    #[test]
     fn bounded_and_resettable() {
         let p = [1.0; PARAMS];
         let mut s = FrequencyShiftState::new(&p, 48000.0);
