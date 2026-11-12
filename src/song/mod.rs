@@ -52,10 +52,10 @@ pub enum SynthKind {
     GmSynth,
     TransistorBass,
     SuperSaw,
-    AuroraWavetable,
     Slicer,
     ThreeXOsc,
     SoundFontPlayer,
+    AuroraWavetable,
 }
 
 impl SynthKind {
