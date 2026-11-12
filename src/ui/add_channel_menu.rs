@@ -92,9 +92,10 @@ mod tests {
                 (1, 3, "GMSynth"),
                 (1, 4, "Transistor Bass"),
                 (1, 5, "SuperSaw"),
-                (1, 6, "Slicer"),
-                (1, 7, "3x Osc"),
-                (1, 8, "SoundFont Player"),
+                (1, 6, "Aurora Wavetable"),
+                (1, 7, "Slicer"),
+                (1, 8, "3x Osc"),
+                (1, 9, "SoundFont Player"),
             ]
         );
     }
