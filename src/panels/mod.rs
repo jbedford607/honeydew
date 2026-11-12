@@ -474,6 +474,8 @@ pub fn panel_for(type_id: u16) -> Option<&'static Panel> {
             (honeydew_audio::de_esser::DE_ESSER, fx::de_esser::panel()),
             (honeydew_audio::denoise::DENOISE, fx::denoise::panel()),
             (honeydew_audio::half_time::HALF_TIME, fx::half_time::panel()),
+            (honeydew_audio::growl::GROWL, fx::growl::panel()),
+            (honeydew_audio::frequency_shift::METAL_SHIFT, fx::frequency_shift::panel()),
         ];
         fx.chain(inst).chain(lemon).collect()
     });

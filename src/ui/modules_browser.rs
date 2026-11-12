@@ -187,6 +187,7 @@ const SECTIONS: [(Option<&str>, &[Entry]); 7] = [
             M(lemon::LIMITER),
             M(36),
             M(41),
+            M(honeydew_audio::growl::GROWL),
         ],
     ),
     (
@@ -211,6 +212,7 @@ const SECTIONS: [(Option<&str>, &[Entry]); 7] = [
             M(13),
             M(honeydew_audio::half_time::HALF_TIME),
             M(honeydew_audio::modulator::MODULATOR),
+            M(honeydew_audio::frequency_shift::METAL_SHIFT),
             M(4),
             M(14),
             M(25),

@@ -12,6 +12,8 @@ mod dynamic_eq;
 mod effects;
 mod effects_24_51;
 mod half_time;
+mod growl;
+mod frequency_shift;
 #[cfg(test)]
 mod inst_rows;
 #[cfg(test)]
@@ -39,6 +41,8 @@ pub use effects_24_51::snap_echo_delay;
 pub(crate) use effects_24_51::{arp_pattern, arp_steps};
 /// Half Time, Honeydew's own effect (`honeydew_audio::half_time`).
 pub use half_time::MODULE as HALF_TIME;
+pub use growl::MODULE as AURORA_GROWL;
+pub use frequency_shift::MODULE as AURORA_METAL_SHIFT;
 pub(crate) use instruments::GMSYNTH_WAVESHAPES;
 /// Lemon Studio's reverb and limiter, Honeydew's own effects (`honeydew_audio::lemon`).
 pub use lemon::MODULES as LEMON_MODULES;
@@ -318,7 +322,7 @@ pub fn module_spec(id: u16) -> Option<&'static ModuleSpec> {
         .chain(instruments())
         .chain(&PLUGINS)
         .chain(&LEMON_MODULES)
-        .chain([&DYNAMIC_EQ, &MODULATOR, &DE_ESSER, &DENOISE, &HALF_TIME])
+        .chain([&DYNAMIC_EQ, &MODULATOR, &DE_ESSER, &DENOISE, &HALF_TIME, &AURORA_GROWL, &AURORA_METAL_SHIFT])
         .find(|m| m.id == id)
 }
 
