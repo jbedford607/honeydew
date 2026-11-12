@@ -652,10 +652,10 @@ fn a_synth_channel_starts_with_its_instrument_module() {
             2,
             19,
             23,
-            honeydew_audio::aurora_synth::AURORA_SYNTH,
             33,
             39,
-            52
+            52,
+            honeydew_audio::aurora_synth::AURORA_SYNTH
         ]
     );
     for (channel, id) in song.channels[2..].iter().zip(ids) {
