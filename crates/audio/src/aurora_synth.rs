@@ -122,6 +122,7 @@ impl Filter {
 struct Voice {
     active: bool,
     key: u8,
+    slide: [f32; 3],
     vel: f32,
     pan: f32,
     age: u64,
@@ -240,7 +241,6 @@ pub struct AuroraSynth {
     serial: u64,
     lfo: f32,
     bend: f32,
-    slide: f32,
 }
 impl AuroraSynth {
     pub fn new(sr: f32) -> Self {
@@ -251,7 +251,6 @@ impl AuroraSynth {
             serial: 0,
             lfo: 0.0,
             bend: 0.0,
-            slide: 0.0,
         }
     }
     fn render(&mut self, cfg: &Settings, freqs: &[f32; POLY], lfo: f32) -> (f32, f32) {
@@ -278,7 +277,7 @@ impl AuroraSynth {
                 let phase = (v.a[unison] + cfg.fm * 0.2 * b).rem_euclid(1.0);
                 let a = oscillator(wa, phase, step);
                 let sample = (1.0 - cfg.mix) * a + cfg.mix * b;
-                let pan = (v.pan + cfg.pan[unison]).clamp(0.0, 1.0);
+                let pan = (v.pan + v.slide[1] + cfg.pan[unison]).clamp(0.0, 1.0);
                 l += sample * (1.0 - pan).sqrt();
                 r += sample * pan.sqrt();
                 v.a[unison] = (v.a[unison] + step).fract();
@@ -288,8 +287,9 @@ impl AuroraSynth {
             r *= cfg.norm;
             let sub = (TAU * v.sub).sin() * cfg.sub * 0.5;
             v.sub = (v.sub + base * 0.5 / sr).fract();
-            l += sub * (1.0 - v.pan).sqrt();
-            r += sub * v.pan.sqrt();
+            let sub_pan = (v.pan + v.slide[1]).clamp(0.0, 1.0);
+            l += sub * (1.0 - sub_pan).sqrt();
+            r += sub * sub_pan.sqrt();
             if v.ticker == 0 {
                 let cutoff = (cfg.cutoff
                     * 2.0_f32.powf(lfo * cfg.lfo_filter * 4.0 + env * cfg.env_filter * 4.0))
@@ -298,7 +298,7 @@ impl AuroraSynth {
                 v.fr.tune(cutoff, cfg.res, sr);
             }
             v.ticker = (v.ticker + 1) % 32;
-            let vol = env * v.vel * cfg.level * 0.16;
+            let vol = env * (v.vel + v.slide[2]).clamp(0.0, 1.0) * cfg.level * 0.16;
             left += v.fl.low((l * cfg.drive).tanh()) * vol;
             right += v.fr.low((r * cfg.drive).tanh()) * vol;
         }
@@ -314,7 +314,7 @@ impl Instrument for AuroraSynth {
         }
     }
     fn note_on(&mut self, key: u8, velocity: f32, pan: f32) {
-        if velocity <= 0.0 {
+        if !velocity.is_finite() || velocity <= 0.0 || !pan.is_finite() {
             return;
         }
         self.serial = self.serial.wrapping_add(1);
@@ -364,7 +364,6 @@ impl Instrument for AuroraSynth {
         self.voices = [Voice::default(); POLY];
         self.lfo = 0.0;
         self.bend = 0.0;
-        self.slide = 0.0;
     }
     fn process(&mut self, left: &mut [f32], right: &mut [f32], ctx: ProcessContext) {
         let cfg = Settings::of(&self.p);
@@ -372,7 +371,7 @@ impl Instrument for AuroraSynth {
         for (i, v) in self.voices.iter().enumerate() {
             if v.active {
                 freqs[i] =
-                    440.0 * 2.0_f32.powf((v.key as f32 - 69.0 + self.bend + self.slide) / 12.0);
+                    440.0 * 2.0_f32.powf((v.key as f32 - 69.0 + self.bend + v.slide[0]) / 12.0);
             }
         }
         if ctx.playing {
@@ -392,9 +391,11 @@ impl Instrument for AuroraSynth {
             self.bend = 4.0 * value.clamp(0.0, 1.0) - 2.0;
         }
     }
-    fn set_slide(&mut self, pitch: f32, _pan: f32, _velocity: f32) {
-        if pitch.is_finite() {
-            self.slide = pitch.clamp(-48.0, 48.0);
+    fn set_slide(&mut self, pitch: f32, pan: f32, velocity: f32) {
+        if pitch.is_finite() && pan.is_finite() && velocity.is_finite() {
+            for voice in &mut self.voices {
+                voice.slide = [pitch.clamp(-48.0, 48.0), pan.clamp(-1.0, 1.0), velocity.clamp(-1.0, 1.0)];
+            }
         }
     }
 }
@@ -434,6 +435,20 @@ mod tests {
         render(&mut s, 1000);
         assert!(s.voices.iter().all(|v| !v.active));
     }
+    #[test]
+    fn slide_offsets_apply_to_active_voices_not_new_ones() {
+        let mut s = AuroraSynth::new(48000.0);
+        s.note_on(60, 1.0, 0.5);
+        s.set_slide(12.0, 0.25, -0.4);
+        let first = s.voices.iter().find(|v| v.active && v.key == 60).unwrap();
+        assert_eq!(first.slide, [12.0, 0.25, -0.4]);
+        s.note_on(64, 1.0, 0.5);
+        let second = s.voices.iter().find(|v| v.active && v.key == 64).unwrap();
+        assert_eq!(second.slide, [0.0; 3]);
+        s.set_slide(0.0, 1.0, -1.0);
+        assert!(render(&mut s, 512).iter().all(|&x| x == 0.0));
+    }
+
     #[test]
     fn bounded_polyphony() {
         let mut s = AuroraSynth::new(48000.0);
