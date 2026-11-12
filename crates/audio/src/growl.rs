@@ -63,6 +63,8 @@ pub struct GrowlState {
     mix: f32,
     phase: f32,
     ticker: u8,
+    // Avoid modifying the filter's tuning cadence on repeat automation writes.
+    last_params: [f32; PARAMS],
 }
 impl GrowlState {
     pub fn new(params: &[f32], sample_rate: f32) -> Self {
@@ -81,12 +83,20 @@ impl GrowlState {
             mix: 0.7,
             phase: 0.0,
             ticker: 0,
+            last_params: [f32::NAN; PARAMS],
         };
         s.refresh(params, sample_rate);
         s
     }
     pub fn refresh(&mut self, p: &[f32], sr: f32) {
-        let v = |i: usize| p.get(i).copied().unwrap_or(DEFAULTS[i]).clamp(0.0, 1.0);
+        let values: [f32; PARAMS] = std::array::from_fn(|i| {
+            p.get(i).copied().unwrap_or(DEFAULTS[i]).clamp(0.0, 1.0)
+        });
+        if values == self.last_params && sr == self.rate {
+            return;
+        }
+        self.last_params = values;
+        let v = |i: usize| values[i];
         self.rate = sr;
         self.drive = 1.0 + 19.0 * v(DRIVE).powi(2);
         self.center = 80.0 * 22.0_f32.powf(v(VOWEL));
@@ -150,6 +160,24 @@ mod tests {
         for _ in 0..500 {
             let (l, r) = synth.process_frame(0.25, -0.25);
             assert!(l.is_finite() && r.is_finite());
+        }
+    }
+
+    #[test]
+    fn identical_automation_values_preserve_the_exact_audio_stream() {
+        let mut plain = GrowlState::new(&DEFAULTS, 48000.0);
+        let mut repeated = GrowlState::new(&DEFAULTS, 48000.0);
+        for n in 0..12_000 {
+            if n % 37 == 0 {
+                repeated.refresh(&DEFAULTS, 48000.0);
+                repeated.refresh(&DEFAULTS, 48000.0);
+            }
+            let x = (n as f32 * 0.017).sin() * 0.8;
+            assert_eq!(
+                plain.process_frame(x, -x),
+                repeated.process_frame(x, -x),
+                "sample {n}"
+            );
         }
     }
 
