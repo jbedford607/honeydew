@@ -3,6 +3,22 @@
 //! sub, filter, ADSR, LFO, drive and stereo. No work allocates in audio callback.
 use crate::{ProcessContext, instrument::Instrument};
 use std::f32::consts::{PI, TAU};
+use std::sync::LazyLock;
+
+// Interpolated sine table eliminates repeated transcendentals per unison voice.
+// Force its one-time initialization when creating the instrument, not on the audio thread.
+const SINE_POINTS: usize = 2048;
+static SINE_TABLE: LazyLock<[f32; SINE_POINTS + 1]> = LazyLock::new(|| {
+    std::array::from_fn(|i| (TAU * i as f32 / SINE_POINTS as f32).sin())
+});
+#[inline]
+fn fast_sine(phase: f32) -> f32 {
+    let pos = phase * SINE_POINTS as f32;
+    let idx = (pos as usize).min(SINE_POINTS - 1);
+    let frac = pos - idx as f32;
+    SINE_TABLE[idx] + frac * (SINE_TABLE[idx + 1] - SINE_TABLE[idx])
+}
+
 
 pub const AURORA_SYNTH: u16 = 1011;
 pub const WAVE_A: usize = 1;
@@ -214,7 +230,7 @@ fn blep(t: f32, dt: f32) -> f32 {
 #[inline]
 fn shape(kind: usize, t: f32, dt: f32) -> f32 {
     match kind {
-        0 => (TAU * t).sin(),
+        0 => fast_sine(t),
         1 => 2.0 * t - 1.0 - blep(t, dt),
         2 => {
             let y = if t < 0.5 { 1.0 } else { -1.0 };
@@ -244,6 +260,7 @@ pub struct AuroraSynth {
 }
 impl AuroraSynth {
     pub fn new(sr: f32) -> Self {
+        LazyLock::force(&SINE_TABLE);
         Self {
             sr,
             p: DEFAULTS,
@@ -285,7 +302,7 @@ impl AuroraSynth {
             }
             l *= cfg.norm;
             r *= cfg.norm;
-            let sub = (TAU * v.sub).sin() * cfg.sub * 0.5;
+            let sub = fast_sine(v.sub) * cfg.sub * 0.5;
             v.sub = (v.sub + base * 0.5 / sr).fract();
             let sub_pan = (v.pan + v.slide[1]).clamp(0.0, 1.0);
             l += sub * (1.0 - sub_pan).sqrt();
@@ -452,6 +469,35 @@ mod tests {
         assert_eq!(second.slide, [0.0; 3]);
         s.set_slide(0.0, 1.0, -1.0);
         assert!(render(&mut s, 512).iter().all(|&x| x == 0.0));
+    }
+
+    #[test]
+    fn interpolated_sine_matches_reference() {
+        AuroraSynth::new(48000.0);
+        for i in 0..4096 {
+            let phase = (i as f32 + 0.37) / 4096.0;
+            let expected = (TAU * phase).sin();
+            assert!((fast_sine(phase) - expected).abs() < 0.000005);
+        }
+    }
+
+    #[test]
+    fn extreme_polyphonic_render_stays_finite_across_sample_rates() {
+        for sample_rate in [44100.0, 48000.0, 96000.0] {
+            let mut synth = AuroraSynth::new(sample_rate);
+            for i in 1..PARAMS {
+                synth.set_parameter(i, 1.0);
+            }
+            for key in 48..60 {
+                synth.note_on(key, 1.0, 0.5);
+            }
+            let result = render(&mut synth, 4096);
+            assert!(result.iter().all(|x| x.is_finite()), "sample rate {sample_rate}");
+            synth.all_notes_off();
+            render(&mut synth, 4096);
+            synth.reset();
+            assert!(synth.voices.iter().all(|v| !v.active));
+        }
     }
 
     #[test]
