@@ -8,8 +8,9 @@ use std::sync::LazyLock;
 // Interpolated sine table eliminates repeated transcendentals per unison voice.
 // Force its one-time initialization when creating the instrument, not on the audio thread.
 const SINE_POINTS: usize = 2048;
-static SINE_TABLE: LazyLock<[f32; SINE_POINTS + 1]> =
-    LazyLock::new(|| std::array::from_fn(|i| (TAU * i as f32 / SINE_POINTS as f32).sin()));
+static SINE_TABLE: LazyLock<[f32; SINE_POINTS + 1]> = LazyLock::new(|| {
+    std::array::from_fn(|i| (TAU * i as f32 / SINE_POINTS as f32).sin())
+});
 #[inline]
 fn fast_sine(phase: f32) -> f32 {
     let pos = phase * SINE_POINTS as f32;
@@ -17,6 +18,7 @@ fn fast_sine(phase: f32) -> f32 {
     let frac = pos - idx as f32;
     SINE_TABLE[idx] + frac * (SINE_TABLE[idx + 1] - SINE_TABLE[idx])
 }
+
 
 pub const AURORA_SYNTH: u16 = 1011;
 pub const WAVE_A: usize = 1;
@@ -328,9 +330,13 @@ impl Instrument for AuroraSynth {
         if let Some(p) = self.p.get_mut(index) {
             *p = value;
         }
+        // Switching an instrument off must not leave notes sounding when re-enabled.
+        if index == 0 && value < 0.5 {
+            self.reset();
+        }
     }
     fn note_on(&mut self, key: u8, velocity: f32, pan: f32) {
-        if !velocity.is_finite() || velocity <= 0.0 || !pan.is_finite() {
+        if self.p[0] < 0.5 || !velocity.is_finite() || velocity <= 0.0 || !pan.is_finite() {
             return;
         }
         self.serial = self.serial.wrapping_add(1);
@@ -338,6 +344,13 @@ impl Instrument for AuroraSynth {
             .voices
             .iter()
             .position(|v| !v.active)
+            .or_else(|| {
+                // Reuse the quietest releasing note before stealing a held note.
+                self.voices.iter().enumerate()
+                    .filter(|(_, voice)| voice.env.state == Stage::Release)
+                    .min_by(|(_, a), (_, b)| a.env.value.total_cmp(&b.env.value))
+                    .map(|(i, _)| i)
+            })
             .unwrap_or_else(|| {
                 self.voices
                     .iter()
@@ -382,6 +395,9 @@ impl Instrument for AuroraSynth {
         self.bend = 0.0;
     }
     fn process(&mut self, left: &mut [f32], right: &mut [f32], ctx: ProcessContext) {
+        if self.p[0] < 0.5 {
+            return;
+        }
         let cfg = Settings::of(&self.p);
         let mut freqs = [0.0; POLY];
         for (i, v) in self.voices.iter().enumerate() {
@@ -393,6 +409,12 @@ impl Instrument for AuroraSynth {
         if ctx.playing {
             self.lfo = (ctx.start_beat as f32 * 60.0 / ctx.tempo_bpm.max(1.0) * cfg.lfo_rate)
                 .rem_euclid(1.0);
+        }
+        // Silent channels are common on Android; avoid processing 12 empty voices per sample.
+        if self.voices.iter().all(|voice| !voice.active) {
+            let frames = left.len().min(right.len()) as f32;
+            self.lfo = (self.lfo + frames * cfg.lfo_rate / self.sr).fract();
+            return;
         }
         for (l, r) in left.iter_mut().zip(right.iter_mut()) {
             let modulation = (TAU * self.lfo).sin();
@@ -490,15 +512,41 @@ mod tests {
                 synth.note_on(key, 1.0, 0.5);
             }
             let result = render(&mut synth, 4096);
-            assert!(
-                result.iter().all(|x| x.is_finite()),
-                "sample rate {sample_rate}"
-            );
+            assert!(result.iter().all(|x| x.is_finite()), "sample rate {sample_rate}");
             synth.all_notes_off();
             render(&mut synth, 4096);
             synth.reset();
             assert!(synth.voices.iter().all(|v| !v.active));
         }
+    }
+
+    #[test]
+    fn disabled_instrument_never_outputs_audio_or_retains_stuck_notes() {
+        let mut synth = AuroraSynth::new(48000.0);
+        synth.note_on(69, 1.0, 0.5);
+        assert!(render(&mut synth, 1024).iter().any(|x| x.abs() > 0.0001));
+        synth.set_parameter(0, 0.0);
+        assert!(synth.voices.iter().all(|v| !v.active));
+        assert!(render(&mut synth, 1024).iter().all(|&x| x == 0.0));
+        synth.note_on(69, 1.0, 0.5);
+        assert!(synth.voices.iter().all(|v| !v.active));
+        synth.set_parameter(0, 1.0);
+        synth.note_on(69, 1.0, 0.5);
+        assert!(render(&mut synth, 1024).iter().any(|x| x.abs() > 0.0001));
+    }
+
+    #[test]
+    fn releasing_voice_is_stolen_before_held_notes() {
+        let mut synth = AuroraSynth::new(48000.0);
+        for key in 60..72 {
+            synth.note_on(key, 1.0, 0.5);
+        }
+        render(&mut synth, 128);
+        synth.note_off(61);
+        synth.note_on(80, 1.0, 0.5);
+        assert!(synth.voices.iter().any(|v| v.active && v.key == 80));
+        assert!(synth.voices.iter().all(|v| !v.active || v.key != 61));
+        assert!(synth.voices.iter().any(|v| v.active && v.key == 60));
     }
 
     #[test]
