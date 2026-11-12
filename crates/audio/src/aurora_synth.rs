@@ -8,9 +8,8 @@ use std::sync::LazyLock;
 // Interpolated sine table eliminates repeated transcendentals per unison voice.
 // Force its one-time initialization when creating the instrument, not on the audio thread.
 const SINE_POINTS: usize = 2048;
-static SINE_TABLE: LazyLock<[f32; SINE_POINTS + 1]> = LazyLock::new(|| {
-    std::array::from_fn(|i| (TAU * i as f32 / SINE_POINTS as f32).sin())
-});
+static SINE_TABLE: LazyLock<[f32; SINE_POINTS + 1]> =
+    LazyLock::new(|| std::array::from_fn(|i| (TAU * i as f32 / SINE_POINTS as f32).sin()));
 #[inline]
 fn fast_sine(phase: f32) -> f32 {
     let pos = phase * SINE_POINTS as f32;
@@ -18,7 +17,6 @@ fn fast_sine(phase: f32) -> f32 {
     let frac = pos - idx as f32;
     SINE_TABLE[idx] + frac * (SINE_TABLE[idx + 1] - SINE_TABLE[idx])
 }
-
 
 pub const AURORA_SYNTH: u16 = 1011;
 pub const WAVE_A: usize = 1;
@@ -346,7 +344,9 @@ impl Instrument for AuroraSynth {
             .position(|v| !v.active)
             .or_else(|| {
                 // Reuse the quietest releasing note before stealing a held note.
-                self.voices.iter().enumerate()
+                self.voices
+                    .iter()
+                    .enumerate()
                     .filter(|(_, voice)| voice.env.state == Stage::Release)
                     .min_by(|(_, a), (_, b)| a.env.value.total_cmp(&b.env.value))
                     .map(|(i, _)| i)
@@ -512,7 +512,10 @@ mod tests {
                 synth.note_on(key, 1.0, 0.5);
             }
             let result = render(&mut synth, 4096);
-            assert!(result.iter().all(|x| x.is_finite()), "sample rate {sample_rate}");
+            assert!(
+                result.iter().all(|x| x.is_finite()),
+                "sample rate {sample_rate}"
+            );
             synth.all_notes_off();
             render(&mut synth, 4096);
             synth.reset();
