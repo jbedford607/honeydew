@@ -180,7 +180,13 @@ fn every_current_effect_is_listed_once_and_legacy_ids_never() {
     listed_sorted.sort();
     let current: Vec<u16> = (params::modules().chain(&params::LEMON_MODULES))
         .chain([&params::DYNAMIC_EQ, &params::MODULATOR])
-        .chain([&params::DE_ESSER, &params::DENOISE, &params::HALF_TIME, &params::AURORA_GROWL, &params::AURORA_METAL_SHIFT])
+        .chain([
+            &params::DE_ESSER,
+            &params::DENOISE,
+            &params::HALF_TIME,
+            &params::AURORA_GROWL,
+            &params::AURORA_METAL_SHIFT,
+        ])
         .filter(|m| !m.legacy)
         .map(|m| m.id)
         .collect();
@@ -204,7 +210,10 @@ fn every_current_effect_is_listed_once_and_legacy_ids_never() {
 /// The SYNTH rows' module ids by display name.
 const SYNTH_IDS: [(&str, u16); 9] = [
     ("3x Osc", 39),
-    ("Aurora Wavetable", honeydew_audio::aurora_synth::AURORA_SYNTH),
+    (
+        "Aurora Wavetable",
+        honeydew_audio::aurora_synth::AURORA_SYNTH,
+    ),
     ("DW Sampler", 1),
     ("GMSynth", 2),
     ("MiniSynth", 0),
@@ -1007,7 +1016,10 @@ fn a_z_lists_every_entry_by_its_name_naturally_with_no_sections() {
     let az = names(&super::rows("", ModuleOrdering::AZ, Takes::Instruments));
     let entries = rows("").into_iter().filter(|r| matches!(r, Row::Item(_)));
     assert_eq!(az.len(), entries.count());
-    assert_eq!(&az[..4], ["3x Osc", "Analyzer", "Arpeggiator", "Aurora Growl Forge"]);
+    assert_eq!(
+        &az[..4],
+        ["3x Osc", "Analyzer", "Arpeggiator", "Aurora Growl Forge"]
+    );
     let at = |name| az.iter().position(|n| *n == name).unwrap();
     assert_eq!(
         (at("Pitcher") + 1, at("Reverb") + 1),
