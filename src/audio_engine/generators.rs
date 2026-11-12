@@ -12,6 +12,7 @@ use crate::params::{Role, module_spec};
 use crate::sample_cache::SampleCache;
 use crate::song::plugin::PLUGIN_INSTRUMENT;
 use crate::song::{Channel, ModuleInstance, TimeSig};
+use honeydew_audio::aurora_synth::AuroraSynth;
 use honeydew_audio::dw_sampler::{DwSampler, DwZone};
 use honeydew_audio::dwp::Cstm;
 use honeydew_audio::gmsynth::{self, GmSynth};
@@ -54,6 +55,7 @@ fn instrument(
             )))
         }
         23 => Some(Box::new(SuperSaw::new(sample_rate))),
+        honeydew_audio::aurora_synth::AURORA_SYNTH => Some(Box::new(AuroraSynth::new(sample_rate))),
         33 => Some(Box::new(super::slicer::instrument(
             channel,
             module,

@@ -1,4 +1,5 @@
 pub mod analysis;
+pub mod aurora_synth;
 pub mod automation;
 mod biquad;
 pub mod builtin_drums;
@@ -13,8 +14,10 @@ pub mod dw_sampler;
 pub mod dwp;
 pub mod dynamic_eq;
 pub mod flac_writer;
+pub mod frequency_shift;
 pub mod gm_waveshapes;
 pub mod gmsynth;
+pub mod growl;
 pub mod half_time;
 pub mod input;
 pub mod instrument;
@@ -111,6 +114,8 @@ pub fn effect_info(id: u16) -> Option<EffectInfo> {
         de_esser::DE_ESSER => ("De-esser", de_esser::PARAMS),
         denoise::DENOISE => ("Denoise", denoise::PARAMS),
         half_time::HALF_TIME => ("Half Time", half_time::PARAMS),
+        growl::GROWL => ("Aurora Growl Forge", growl::PARAMS),
+        frequency_shift::METAL_SHIFT => ("Aurora Metal Shift", frequency_shift::PARAMS),
         _ => return None,
     };
     Some(EffectInfo {
@@ -527,6 +532,16 @@ impl AudioEffect {
                     denoise::DEFAULTS.to_vec(),
                     Processor::Denoise(Box::new(state)),
                 )
+            }
+            growl::GROWL => {
+                let p = growl::DEFAULTS.to_vec();
+                let state = growl::GrowlState::new(&p, sample_rate);
+                (p, Processor::Growl(Box::new(state)))
+            }
+            frequency_shift::METAL_SHIFT => {
+                let p = frequency_shift::DEFAULTS.to_vec();
+                let state = frequency_shift::FrequencyShiftState::new(&p, sample_rate);
+                (p, Processor::FrequencyShift(Box::new(state)))
             }
             half_time::HALF_TIME => {
                 let state = half_time::HalfTimeState::new(&half_time::DEFAULTS, sample_rate);
@@ -947,6 +962,8 @@ enum Processor {
     DeEsser(Box<de_esser::DeEsserState>),
     Denoise(Box<denoise::DenoiseState>),
     HalfTime(Box<half_time::HalfTimeState>),
+    Growl(Box<growl::GrowlState>),
+    FrequencyShift(Box<frequency_shift::FrequencyShiftState>),
     Monitor,
 }
 
@@ -993,6 +1010,8 @@ impl Processor {
             Self::DeEsser(state) => state.refresh(params, sample_rate),
             Self::Denoise(state) => state.refresh(params, sample_rate),
             Self::HalfTime(state) => state.refresh(params, sample_rate),
+            Self::Growl(state) => state.refresh(params, sample_rate),
+            Self::FrequencyShift(state) => state.refresh(params, sample_rate),
             Self::Monitor => {}
         }
     }
@@ -1073,6 +1092,8 @@ impl Processor {
             Self::DeEsser(state) => state.process_frame(l, r),
             Self::Denoise(state) => state.process_frame(l, r),
             Self::HalfTime(state) => state.process_frame(l, r),
+            Self::Growl(state) => state.process_frame(l, r),
+            Self::FrequencyShift(state) => state.process_frame(l, r),
             Self::Monitor => (l, r),
         }
     }
@@ -1134,6 +1155,8 @@ impl Processor {
             Self::DeEsser(state) => state.reset(),
             Self::Denoise(state) => state.reset(),
             Self::HalfTime(state) => state.reset(),
+            Self::Growl(state) => state.reset(),
+            Self::FrequencyShift(state) => state.reset(),
             Self::Monitor => {}
         }
     }

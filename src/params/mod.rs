@@ -4,6 +4,7 @@
 //! Pure data and formatting; no UI. Parameter values are normalised `f32` in [0, 1] and the indices are
 //! The stored param numbers (param 0 is always `Enable`), shared with the audio side.
 
+mod aurora_synth;
 mod channel;
 mod de_esser;
 mod denoise;
@@ -11,6 +12,8 @@ mod display;
 mod dynamic_eq;
 mod effects;
 mod effects_24_51;
+mod frequency_shift;
+mod growl;
 mod half_time;
 #[cfg(test)]
 mod inst_rows;
@@ -26,6 +29,7 @@ mod step_tests;
 #[cfg(test)]
 mod tests;
 
+pub use aurora_synth::MODULE as AURORA_WAVETABLE;
 pub use channel::{CHANNEL_PARAMS, COMMON_PARAMS, DRUM_SLOT_PARAMS};
 /// The De-esser and Denoise, Honeydew's own effects (`honeydew_audio::de_esser`, `honeydew_audio::denoise`).
 pub use de_esser::MODULE as DE_ESSER;
@@ -37,6 +41,8 @@ pub use dynamic_eq::MODULE as DYNAMIC_EQ;
 pub(crate) use effects_24_51::ARP_RHYTHM_PATTERNS;
 pub use effects_24_51::snap_echo_delay;
 pub(crate) use effects_24_51::{arp_pattern, arp_steps};
+pub use frequency_shift::MODULE as AURORA_METAL_SHIFT;
+pub use growl::MODULE as AURORA_GROWL;
 /// Half Time, Honeydew's own effect (`honeydew_audio::half_time`).
 pub use half_time::MODULE as HALF_TIME;
 pub(crate) use instruments::GMSYNTH_WAVESHAPES;
@@ -318,7 +324,16 @@ pub fn module_spec(id: u16) -> Option<&'static ModuleSpec> {
         .chain(instruments())
         .chain(&PLUGINS)
         .chain(&LEMON_MODULES)
-        .chain([&DYNAMIC_EQ, &MODULATOR, &DE_ESSER, &DENOISE, &HALF_TIME])
+        .chain([
+            &DYNAMIC_EQ,
+            &MODULATOR,
+            &DE_ESSER,
+            &DENOISE,
+            &HALF_TIME,
+            &AURORA_GROWL,
+            &AURORA_METAL_SHIFT,
+            &AURORA_WAVETABLE,
+        ])
         .find(|m| m.id == id)
 }
 

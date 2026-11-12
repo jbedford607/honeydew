@@ -1,6 +1,7 @@
 //! Instrument panels, one file per instrument type, laid out like the effect files
 //! (`fx/`).
 
+pub(super) mod aurora_synth;
 mod dw_sampler;
 mod gm_synth;
 mod mini_synth;

@@ -167,6 +167,7 @@ const SECTIONS: [(Option<&str>, &[Entry]); 7] = [
             Entry::Synth(S::SoundFontPlayer),
             Entry::Synth(S::SuperSaw),
             Entry::Synth(S::TransistorBass),
+            Entry::Synth(S::AuroraWavetable),
         ],
     ),
     (
@@ -176,6 +177,7 @@ const SECTIONS: [(Option<&str>, &[Entry]); 7] = [
     (
         Some("LEVEL"),
         &[
+            M(honeydew_audio::growl::GROWL),
             M(29),
             M(8),
             M(honeydew_audio::de_esser::DE_ESSER),
@@ -207,6 +209,7 @@ const SECTIONS: [(Option<&str>, &[Entry]); 7] = [
         Some("MISC"),
         &[
             M(26),
+            M(honeydew_audio::frequency_shift::METAL_SHIFT),
             M(11),
             M(13),
             M(honeydew_audio::half_time::HALF_TIME),
