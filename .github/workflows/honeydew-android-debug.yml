@@ -1,0 +1,52 @@
+name: Honeydew Android Debug APK
+on:
+  push:
+    paths:
+      - '.github/workflows/honeydew-android-debug.yml'
+      - 'src/**'
+      - 'crates/**'
+      - 'vendor/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'android/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  android-base-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.91.0
+        with:
+          targets: aarch64-linux-android, armv7-linux-androideabi
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: honeydew-android-custom-debug
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libclang-dev
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.0.13004108'
+          cargo install cargo-ndk --version 4.1.2 --locked
+      - name: Compile real Honeydew Android APK
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/28.0.13004108"
+          tools/android-dist.sh --base
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: honeydew-android-custom-base-debug
+          path: target/honeydew-android-*-arm-base-debug.apk
+          if-no-files-found: error
