@@ -307,10 +307,11 @@ impl AuroraSynth {
 }
 impl Instrument for AuroraSynth {
     fn set_parameter(&mut self, index: usize, value: f32) {
-        if value.is_finite() && (0.0..=1.0).contains(&value) {
-            if let Some(p) = self.p.get_mut(index) {
-                *p = value;
-            }
+        if !value.is_finite() || !(0.0..=1.0).contains(&value) {
+            return;
+        }
+        if let Some(p) = self.p.get_mut(index) {
+            *p = value;
         }
     }
     fn note_on(&mut self, key: u8, velocity: f32, pan: f32) {
