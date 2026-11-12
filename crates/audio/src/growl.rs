@@ -89,9 +89,8 @@ impl GrowlState {
         s
     }
     pub fn refresh(&mut self, p: &[f32], sr: f32) {
-        let values: [f32; PARAMS] = std::array::from_fn(|i| {
-            p.get(i).copied().unwrap_or(DEFAULTS[i]).clamp(0.0, 1.0)
-        });
+        let values: [f32; PARAMS] =
+            std::array::from_fn(|i| p.get(i).copied().unwrap_or(DEFAULTS[i]).clamp(0.0, 1.0));
         if values == self.last_params && sr == self.rate {
             return;
         }
