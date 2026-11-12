@@ -12,6 +12,7 @@ use crate::params::{Role, module_spec};
 use crate::sample_cache::SampleCache;
 use crate::song::plugin::PLUGIN_INSTRUMENT;
 use crate::song::{Channel, ModuleInstance, TimeSig};
+use honeydew_audio::aurora_synth::AuroraSynth;
 use honeydew_audio::dw_sampler::{DwSampler, DwZone};
 use honeydew_audio::dwp::Cstm;
 use honeydew_audio::gmsynth::{self, GmSynth};
@@ -20,7 +21,6 @@ use honeydew_audio::minisynth::MiniSynth;
 use honeydew_audio::soundfont::SoundFontPlayer;
 use honeydew_audio::stream::Rings;
 use honeydew_audio::supersaw::SuperSaw;
-use honeydew_audio::aurora_synth::AuroraSynth;
 use honeydew_audio::three_osc::ThreeOsc;
 use honeydew_audio::transistor_bass::TransistorBass;
 

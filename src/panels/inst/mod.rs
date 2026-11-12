@@ -1,13 +1,13 @@
 //! Instrument panels, one file per instrument type, laid out like the effect files
 //! (`fx/`).
 
+pub(super) mod aurora_synth;
 mod dw_sampler;
 mod gm_synth;
 mod mini_synth;
 pub(crate) mod slicer;
 pub(crate) mod soundfont_player;
 mod super_saw;
-pub(super) mod aurora_synth;
 pub(crate) mod three_osc;
 mod transistor_bass;
 
