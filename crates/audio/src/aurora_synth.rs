@@ -334,7 +334,7 @@ impl Instrument for AuroraSynth {
         }
     }
     fn note_on(&mut self, key: u8, velocity: f32, pan: f32) {
-        if self.p[0] < 0.5 || !velocity.is_finite() || velocity <= 0.0 || !pan.is_finite() {
+        if self.p[0] < 0.5 || key > 127 || !velocity.is_finite() || velocity <= 0.0 || !pan.is_finite() {
             return;
         }
         self.serial = self.serial.wrapping_add(1);
@@ -521,6 +521,15 @@ mod tests {
             synth.reset();
             assert!(synth.voices.iter().all(|v| !v.active));
         }
+    }
+
+    #[test]
+    fn invalid_midi_key_or_velocity_cannot_start_a_voice() {
+        let mut synth = AuroraSynth::new(48000.0);
+        synth.note_on(255, 1.0, 0.5);
+        synth.note_on(60, f32::NAN, 0.5);
+        synth.note_on(60, 1.0, f32::INFINITY);
+        assert!(synth.voices.iter().all(|v| !v.active));
     }
 
     #[test]

@@ -83,6 +83,9 @@ impl FrequencyShiftState {
         x + self.mix * (shifted - x)
     }
     pub fn process_frame(&mut self, l: f32, r: f32) -> (f32, f32) {
+        // Prevent non-finite audio from entering the delay history or feedback loop.
+        let l = if l.is_finite() { l } else { 0.0 };
+        let r = if r.is_finite() { r } else { 0.0 };
         let a = self.channel(0, l);
         let b = self.channel(1, r);
         self.pos = (self.pos + 1) % TAPS;
@@ -92,6 +95,19 @@ impl FrequencyShiftState {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn bad_samples_cannot_poison_hilbert_history_or_feedback() {
+        let mut p = DEFAULTS;
+        p[FEEDBACK] = 1.0;
+        let mut effect = FrequencyShiftState::new(&p, 48000.0);
+        let (left, right) = effect.process_frame(f32::NAN, f32::INFINITY);
+        assert!(left.is_finite() && right.is_finite());
+        for _ in 0..500 {
+            let (l, r) = effect.process_frame(0.25, -0.25);
+            assert!(l.is_finite() && r.is_finite());
+        }
+    }
+
     #[test]
     fn mix_zero_passes_original() {
         let mut p = DEFAULTS;

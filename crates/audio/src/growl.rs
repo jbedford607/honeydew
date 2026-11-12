@@ -133,12 +133,26 @@ impl GrowlState {
         }
         self.ticker = (self.ticker + 1) % 48;
         self.phase = (self.phase + self.lfo_rate / self.rate).fract();
+        // Invalid upstream samples must not poison persistent filter state.
+        let l = if l.is_finite() { l } else { 0.0 };
+        let r = if r.is_finite() { r } else { 0.0 };
         (self.channel(0, l), self.channel(1, r))
     }
 }
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn bad_samples_cannot_poison_filter_state() {
+        let mut synth = GrowlState::new(&DEFAULTS, 48000.0);
+        let (left, right) = synth.process_frame(f32::NAN, f32::INFINITY);
+        assert!(left.is_finite() && right.is_finite());
+        for _ in 0..500 {
+            let (l, r) = synth.process_frame(0.25, -0.25);
+            assert!(l.is_finite() && r.is_finite());
+        }
+    }
+
     #[test]
     fn transparent_zero_mix() {
         let mut p = DEFAULTS;
