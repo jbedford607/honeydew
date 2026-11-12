@@ -22,3 +22,8 @@ All modules use Honeydew's existing automation parameters and module-rack contro
 - Passing compilation and CI tests does not establish real-device audio latency, touch layout, or battery performance. Those need physical Android testing.
 
 This experimental branch does not include a user-importable wavetable system, a factory preset pack, or a complete Serum 2 clone.
+
+## Verification status
+
+- The Growl Forge processor skips identical parameter updates, preserving ongoing filter modulation at automation reapplication, loop wraps and seeks. A bit-exact DSP regression test covers this behavior.
+- The full Rust workspace CI runs tests and formatting/lint checks separately from the Android APK build. Physical Android playback, touch and battery performance remain outside these automated checks.
