@@ -19,7 +19,7 @@ jobs:
         with:
           components: rustfmt
       - name: Format Rust source
-        run: cargo fmt --all
+        run: cargo fmt --package honeydew --package honeydew-audio
       - name: Commit formatting
         run: |
           git config user.name 'github-actions[bot]'
