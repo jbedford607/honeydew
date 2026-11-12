@@ -144,6 +144,7 @@ pub fn ui_height(type_id: u16) -> Option<f32> {
         33 => 8.5,
         39 => 10.0,
         52 => 8.5,
+        honeydew_audio::aurora_synth::AURORA_SYNTH => 8.5,
         // Effects and note effects.
         3 | 7 | 26 | 30 | 51 => 10.0,
         4 | 35 | 36 | 43 | 46 => 9.0,

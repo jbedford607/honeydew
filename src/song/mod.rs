@@ -52,18 +52,20 @@ pub enum SynthKind {
     GmSynth,
     TransistorBass,
     SuperSaw,
+    AuroraWavetable,
     Slicer,
     ThreeXOsc,
     SoundFontPlayer,
 }
 
 impl SynthKind {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::MiniSynth,
         Self::DwSampler,
         Self::GmSynth,
         Self::TransistorBass,
         Self::SuperSaw,
+        Self::AuroraWavetable,
         Self::Slicer,
         Self::ThreeXOsc,
         Self::SoundFontPlayer,
@@ -76,6 +78,7 @@ impl SynthKind {
             Self::GmSynth => "GMSynth",
             Self::TransistorBass => "Transistor Bass",
             Self::SuperSaw => "SuperSaw",
+            Self::AuroraWavetable => "Aurora Wavetable",
             Self::Slicer => "Slicer",
             Self::ThreeXOsc => "3x Osc",
             Self::SoundFontPlayer => "SoundFont Player",
@@ -90,6 +93,7 @@ impl SynthKind {
             Self::GmSynth => 2,
             Self::TransistorBass => 19,
             Self::SuperSaw => 23,
+            Self::AuroraWavetable => honeydew_audio::aurora_synth::AURORA_SYNTH,
             Self::Slicer => 33,
             Self::ThreeXOsc => 39,
             Self::SoundFontPlayer => 52,

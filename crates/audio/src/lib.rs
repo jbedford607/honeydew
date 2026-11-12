@@ -37,6 +37,7 @@ pub mod pitcher2;
 pub mod playback;
 mod reverbs;
 pub mod sample;
+pub mod aurora_synth;
 pub mod sample_edit;
 pub mod sequencer;
 pub mod sfz;

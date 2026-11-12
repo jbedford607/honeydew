@@ -166,6 +166,7 @@ const SECTIONS: [(Option<&str>, &[Entry]); 7] = [
             Entry::Synth(S::Slicer),
             Entry::Synth(S::SoundFontPlayer),
             Entry::Synth(S::SuperSaw),
+            Entry::Synth(S::AuroraWavetable),
             Entry::Synth(S::TransistorBass),
         ],
     ),

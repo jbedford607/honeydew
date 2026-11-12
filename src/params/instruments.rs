@@ -1048,6 +1048,31 @@ const SOUNDFONT_PLAYER: &[P] = &[
     }),
 ];
 
+// Aurora Wavetable: a Honeydew-native instrument with normalized automatable controls.
+const AURORA_WAVETABLE:&[P]=&[
+ P::ENABLE,
+ P::plain("Wavetable A",0.65),
+ P::plain("Wavetable B",0.0),
+ P::plain("Oscillator Mix",0.35),
+ P::plain("Unison Voices",0.0),
+ P::plain("Unison Detune",0.2),
+ P::plain("Stereo Spread",0.6),
+ P::plain("Filter Cutoff",0.75),
+ P::plain("Filter Resonance",0.15),
+ P::plain("Amp Attack",0.03),
+ P::plain("Amp Decay",0.2),
+ P::plain("Amp Sustain",0.72),
+ P::plain("Amp Release",0.2),
+ P::plain("LFO Rate",0.45),
+ P::plain("LFO Wave Amount",0.0),
+ P::plain("LFO Filter Amount",0.0),
+ P::plain("Sub Oscillator",0.12),
+ P::plain("Drive",0.12),
+ P::plain("Output Level",0.65),
+ P::plain("FM Amount",0.05),
+ P::plain("Filter Envelope Amount",0.0),
+];
+
 pub static MODULES: &[ModuleSpec] = &[
     ModuleSpec::instrument(
         0,
@@ -1098,5 +1123,12 @@ pub static MODULES: &[ModuleSpec] = &[
         "SoundFont Player",
         SOUNDFONT_PLAYER,
         &[],
+    ),
+    ModuleSpec::instrument(
+        honeydew_audio::aurora_synth::AURORA_SYNTH,
+        "Aurora Wavetable",
+        "Aurora Wavetable",
+        AURORA_WAVETABLE,
+        &["OSC", "FILTER", "AMP", "MOD", "FX"],
     ),
 ];
