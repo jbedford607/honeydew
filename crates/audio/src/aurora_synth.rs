@@ -394,7 +394,11 @@ impl Instrument for AuroraSynth {
     fn set_slide(&mut self, pitch: f32, pan: f32, velocity: f32) {
         if pitch.is_finite() && pan.is_finite() && velocity.is_finite() {
             for voice in &mut self.voices {
-                voice.slide = [pitch.clamp(-48.0, 48.0), pan.clamp(-1.0, 1.0), velocity.clamp(-1.0, 1.0)];
+                voice.slide = [
+                    pitch.clamp(-48.0, 48.0),
+                    pan.clamp(-1.0, 1.0),
+                    velocity.clamp(-1.0, 1.0),
+                ];
             }
         }
     }
