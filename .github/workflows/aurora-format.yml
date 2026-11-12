@@ -1,0 +1,29 @@
+name: Format Aurora upgrade source
+on:
+  push:
+    branches: [feature/aurora-synth]
+    paths:
+      - '.github/workflows/aurora-format.yml'
+permissions:
+  contents: write
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/aurora-synth
+      - uses: dtolnay/rust-toolchain@1.91.0
+        with:
+          components: rustfmt
+      - name: Format Rust source
+        run: cargo fmt --all
+      - name: Commit formatting
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add crates/audio/src/growl.rs crates/audio/src/frequency_shift.rs crates/audio/src/aurora_synth.rs src/params/growl.rs src/params/frequency_shift.rs src/params/instruments.rs src/params/mod.rs src/panels/fx/growl.rs src/panels/fx/frequency_shift.rs src/panels/fx/mod.rs src/panels/inst/aurora_synth.rs src/panels/inst/mod.rs src/panels/mod.rs src/song/mod.rs src/audio_engine/generators.rs src/ui/rack.rs src/ui/modules_browser.rs crates/audio/src/lib.rs
+          if ! git diff --cached --quiet; then
+            git commit -m 'Apply rustfmt to Aurora synthesizer and effects'
+            git push origin HEAD:feature/aurora-synth
+          fi
