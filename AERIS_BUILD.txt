@@ -1,0 +1,2 @@
+AERIS OS Android native launcher isolated build branch.
+This branch is not intended to merge into honeydew.
